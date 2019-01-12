@@ -559,18 +559,23 @@ angular.module("faradayApp")
         $scope.searchExploits = function(){
 
             var promises = [];
+            var cvelist = [];
             var selected = $scope.getCurrentSelection();
 
             selected.forEach(function(vuln){
 
-                vuln.refs.forEach(function(ref){
-
-                    if(ref.toLowerCase().startsWith('cve')){
-
-                        var response = ServerAPI.getExploits(ref);
-                        promises.push(response);
-                    }
-                });
+                for (var i = 0; i < vuln.refs.length; i ++){
+                    var result = vuln.refs[i].match( /(CVE-[^, ]*)/gi );
+                    if (result != null) {
+                        for (var x = 0; x < result.length; x++){
+                            if (cvelist.includes(result[x]) !== true ) {
+                                var response = ServerAPI.getExploits(result[x]);
+                                promises.push(response);
+                                cvelist.push(result[x]);
+                            };
+                        };
+                     };
+                };
             });
 
             return $q.all(promises).then(function(modalData){
@@ -580,7 +585,7 @@ angular.module("faradayApp")
                 });
 
                 return response.filter(function(x){
-                  return !angular.equals(x["exploitdb"], []) && !angular.equals(x["metasploit"], [])
+                  return !angular.equals(x["exploitdb"], []) || !angular.equals(x["metasploit"], [])
                 });
 
             }, function(failed) {
