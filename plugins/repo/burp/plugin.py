@@ -137,6 +137,16 @@ class Item(object):
         path = item_node.findall('path')[0]
         location = item_node.findall('location')[0]
         severity = item_node.findall('severity')[0]
+        references = item_node.findall('references')
+        if references:
+            self.references = re.findall('(http.*)"', references[0].text)
+        else:
+            self.references = []
+        vulclass = item_node.findall('vulnerabilityClassifications')
+        if vulclass:
+            self.vulclass = re.findall('(http.*)"', vulclass[0].text)
+        else:
+            self.vulclass = []
         request = self.decode_binary_node('./requestresponse/request')
         response = self.decode_binary_node('./requestresponse/response')
 
@@ -275,6 +285,7 @@ class BurpPlugin(core.PluginBase):
                 s_id,
                 item.name,
                 desc=desc,
+                ref=item.references + item.vulclass,
                 severity=item.severity,
                 website=item.host,
                 path=item.path,
