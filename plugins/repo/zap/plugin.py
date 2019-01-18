@@ -9,6 +9,7 @@ See the file 'doc/LICENSE' for the license information
 from __future__ import with_statement
 from plugins import core
 from model import api
+from bs4 import BeautifulSoup
 import re
 import os
 import socket
@@ -182,20 +183,19 @@ class Item(object):
         self.id = self.get_text_from_subnode('pluginid')
         self.name = self.get_text_from_subnode('alert')
         self.severity = self.get_text_from_subnode('riskcode')
-        self.desc = self.get_text_from_subnode('desc')
+        self.desc = re.sub('<p>|</p>', '', self.get_text_from_subnode('desc'))
 
         if self.get_text_from_subnode('solution'):
-            self.resolution = self.get_text_from_subnode('solution')
+            self.resolution = re.sub('<p>|</p>', '', self.get_text_from_subnode('solution'))
         else:
             self.resolution = ''
 
-        if self.get_text_from_subnode('reference'):
-            self.desc += '\nReference: ' + \
-                self.get_text_from_subnode('reference')
-
         self.ref = []
+        if self.get_text_from_subnode('reference'):
+            soup = BeautifulSoup(self.get_text_from_subnode('reference'), 'html.parser')
+            self.ref = map(lambda e:e.text, soup.select('p'))
         if self.get_text_from_subnode('cweid'):
-            self.ref.append("CWE-" + self.get_text_from_subnode('cweid'))
+            self.ref.append("https://cwe.mitre.org/data/definitions/" + self.get_text_from_subnode('cweid') + ".html")
 
         self.items = []
 
